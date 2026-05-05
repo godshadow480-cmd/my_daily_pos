@@ -1,90 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart POS System</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-   
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/552/552848.png">
-    
-    <title>Smart POS System</title>
+    <title>M.H.A PLASTIC POS</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Smart POS System</h1>
-            <nav>
-                <button onclick="showSection('sales')">အရောင်း</button>
-                <button onclick="showSection('stock')">စတော့</button>
-                <button onclick="showSection('reports')">မှတ်တမ်း</button>
-            </nav>
+    <div class="app-container">
+        <header class="main-header">
+            <div class="brand">
+                <img src="logo.png" alt="Logo" class="app-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/552/552848.png'">
+                <h1>M.H.A PLASTIC</h1>
+            </div>
         </header>
 
-        <section id="sales-section">
-            <h2>အရောင်းဖွင့်ရန်</h2>
-            <div class="input-row">
-                <input type="text" id="itemName" placeholder="ပစ္စည်းအမည်">
-                <input type="number" id="itemPrice" placeholder="ဈေးနှုန်း">
-                <input type="number" id="itemQty" placeholder="အရေအတွက်">
-                <select id="payMethod">
-                    <option value="Cash">Cash</option>
-                    <option value="Credit">အကြွေး (Credit)</option>
-                    <option value="Prepaid">Prepaid</option>
-                </select>
-                <button class="add-btn" onclick="processSale()">စာရင်းသွင်း/Invoice</button>
-            </div>
-        </section>
+        <nav class="tab-bar">
+            <button id="btn-sales" class="tab-btn active" onclick="switchTab('sales')"><i class="fas fa-shopping-cart"></i> အရောင်း</button>
+            <button id="btn-items" class="tab-btn" onclick="switchTab('items')"><i class="fas fa-list"></i> ပစ္စည်းများ</button>
+            <button id="btn-inventory" class="tab-btn" onclick="switchTab('inventory')"><i class="fas fa-box"></i> စတော့</button>
+            <button id="btn-reports" class="tab-btn" onclick="switchTab('reports')"><i class="fas fa-file-invoice"></i> မှတ်တမ်း</button>
+        </nav>
 
-        <section id="stock-section" class="hidden">
-            <h2>Stock လက်ကျန်</h2>
-            <div class="input-row">
-                <input type="text" id="stockName" placeholder="ပစ္စည်းအမည်">
-                <input type="number" id="stockQty" placeholder="အရေအတွက်ပေါင်းရန်">
-                <button class="add-btn" onclick="updateStock()">Stock ထည့်မည်</button>
-            </div>
-            <table>
-                <thead>
-                    <tr><th>အမည်</th><th>လက်ကျန်</th></tr>
-                </thead>
-                <tbody id="stockTableBody"></tbody>
-            </table>
-        </section>
+        <main class="content">
+            <section id="sales-tab" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-user-edit"></i> ဝယ်သူအချက်အလက်</h3>
+                    <div class="form-row">
+                        <input type="text" id="custName" placeholder="ဝယ်သူအမည်">
+                        <input type="text" id="custPh" placeholder="ဖုန်းနံပါတ်">
+                    </div>
+                    <div class="form-row mt-10">
+                        <input type="text" id="custAddr" placeholder="လိပ်စာ">
+                        <input type="text" id="custGate" placeholder="ဂိတ် (Gate)">
+                    </div>
+                </div>
 
-        <section id="reports-section" class="hidden">
-            <h2>အရောင်းမှတ်တမ်းများ</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ရက်စွဲ</th>
-                        <th>အမည်</th>
-                        <th>စုစုပေါင်း</th>
-                        <th>ပေးချေမှု</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="salesTableBody"></tbody>
-            </table>
-        </section>
+                <div class="card">
+                    <h3><i class="fas fa-shopping-basket"></i> ပစ္စည်းရွေးချယ်ရန်</h3>
+                    <div class="form-group">
+                        <select id="saleItemSelect" onchange="updatePriceHint()"></select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>ဈေးနှုန်း</label><input type="number" id="salePrice"></div>
+                        <div class="form-group"><label>အရေအတွက် (pk)</label><input type="number" id="saleQty"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="handleSale()"><i class="fas fa-save"></i> စာရင်းသွင်းမည်</button>
+                </div>
+            </section>
+
+            <section id="items-tab" class="tab-content hidden">
+                <div class="card">
+                    <h3><i class="fas fa-plus-circle"></i> ပစ္စည်းအသစ်ထည့်ရန်</h3>
+                    <input type="text" id="newItemName" placeholder="အမည် (ဥပမာ - MHA ၁ လက်မ)" class="mb-10">
+                    <input type="number" id="newItemPrice" placeholder="ရောင်းဈေးသတ်မှတ်ရန်" class="mb-10">
+                    <button class="btn btn-secondary" onclick="addNewItem()">သိမ်းမည်</button>
+                </div>
+                <div class="card">
+                    <table id="itemsTable"><thead><tr><th>အမည်</th><th>ဈေး</th><th>ဖျက်</th></tr></thead><tbody id="itemsTableBody"></tbody></table>
+                </div>
+            </section>
+
+            <section id="inventory-tab" class="tab-content hidden">
+                <div class="card">
+                    <h3><i class="fas fa-plus-square"></i> စတော့တိုးရန်</h3>
+                    <select id="stockItemSelect" class="mb-10"></select>
+                    <input type="number" id="stockAddQty" placeholder="အရေအတွက် (pk)">
+                    <button class="btn btn-secondary mt-10" onclick="addStockQty()">စတော့ပေါင်းမည်</button>
+                </div>
+                <div class="card">
+                    <table><thead><tr><th>အမည်</th><th>လက်ကျန် (pk)</th></tr></thead><tbody id="inventoryTableBody"></tbody></table>
+                </div>
+            </section>
+
+            <section id="reports-tab" class="tab-content hidden">
+                <div class="card">
+                    <h3><i class="fas fa-history"></i> အရောင်းမှတ်တမ်း</h3>
+                    <table><thead><tr><th>ဝယ်သူ/ပစ္စည်း</th><th>စုစုပေါင်း</th></tr></thead><tbody id="salesTableBody"></tbody></table>
+                </div>
+            </section>
+        </main>
+
+        <div id="invoice-preview-container" class="hidden" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:2000; display:none; flex-direction:column; align-items:center; justify-content:center;">
+            <div id="invoice-card" class="invoice-box" style="background:white; padding:20px; width:320px; border-radius:5px;">
+                <div style="text-align:center;">
+                    <h2 style="margin:0; color:#1e3a8a;">M.H.A PLASTIC</h2>
+                    <p style="font-size:12px; margin:2px;">မိုးထက်အောင်</p>
+                    <p style="font-size:11px; margin:2px;">Ph: 09-740878785, 09-970609758</p>
+                    <p style="font-size:11px; margin:2px;">Address: 46 x 47, 106 C</p>
+                </div>
+                <hr>
+                <div id="invoice-customer-info" style="font-size:12px; margin:10px 0;"></div>
+                <div id="invoice-content" style="font-size:13px; min-height:80px;"></div>
+                <hr>
+                <div style="text-align:center; font-size:11px;">
+                    <p>Kpay: 09750370777 (U Htet Myat Naing)</p>
+                    <p style="font-weight:bold;">ဝယ်ယူအားပေးမှုကို ကျေးဇူးတင်ပါသည်</p>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-secondary" onclick="saveInvoiceAsImage()">Gallery သိမ်းမည်</button>
+                <button class="btn" style="background:#64748b; color:white;" onclick="closeInvoice()">ပိတ်မည်</button>
+            </div>
+        </div>
     </div>
-
-    <div id="invoice-print" class="print-only"></div>
-
     <script src="script.js"></script>
-    
-    <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
-</script>
-
-    
 </body>
 </html>
+
