@@ -1,0 +1,19 @@
+* { box-sizing: border-box; font-family: sans-serif; }
+body { background: #f0f2f5; margin: 0; padding: 10px; }
+.container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+header { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+nav { margin-bottom: 20px; display: flex; gap: 10px; justify-content: center; }
+nav button { padding: 10px 20px; cursor: pointer; border: none; background: #007bff; color: white; border-radius: 4px; }
+.input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+input, select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+.add-btn { background: #28a745; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+th { background: #f8f9fa; }
+.hidden { display: none; }
+
+@media print {
+    body * { visibility: hidden; }
+    .print-only, .print-only * { visibility: visible; }
+    .print-only { position: absolute; left: 0; top: 0; width: 100%; }
+}

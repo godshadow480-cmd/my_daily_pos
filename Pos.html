@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart POS System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+   
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/552/552848.png">
+    
+    <title>Smart POS System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Smart POS System</h1>
+            <nav>
+                <button onclick="showSection('sales')">အရောင်း</button>
+                <button onclick="showSection('stock')">စတော့</button>
+                <button onclick="showSection('reports')">မှတ်တမ်း</button>
+            </nav>
+        </header>
+
+        <section id="sales-section">
+            <h2>အရောင်းဖွင့်ရန်</h2>
+            <div class="input-row">
+                <input type="text" id="itemName" placeholder="ပစ္စည်းအမည်">
+                <input type="number" id="itemPrice" placeholder="ဈေးနှုန်း">
+                <input type="number" id="itemQty" placeholder="အရေအတွက်">
+                <select id="payMethod">
+                    <option value="Cash">Cash</option>
+                    <option value="Credit">အကြွေး (Credit)</option>
+                    <option value="Prepaid">Prepaid</option>
+                </select>
+                <button class="add-btn" onclick="processSale()">စာရင်းသွင်း/Invoice</button>
+            </div>
+        </section>
+
+        <section id="stock-section" class="hidden">
+            <h2>Stock လက်ကျန်</h2>
+            <div class="input-row">
+                <input type="text" id="stockName" placeholder="ပစ္စည်းအမည်">
+                <input type="number" id="stockQty" placeholder="အရေအတွက်ပေါင်းရန်">
+                <button class="add-btn" onclick="updateStock()">Stock ထည့်မည်</button>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>အမည်</th><th>လက်ကျန်</th></tr>
+                </thead>
+                <tbody id="stockTableBody"></tbody>
+            </table>
+        </section>
+
+        <section id="reports-section" class="hidden">
+            <h2>အရောင်းမှတ်တမ်းများ</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ရက်စွဲ</th>
+                        <th>အမည်</th>
+                        <th>စုစုပေါင်း</th>
+                        <th>ပေးချေမှု</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="salesTableBody"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <div id="invoice-print" class="print-only"></div>
+
+    <script src="script.js"></script>
+    
+    <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+    
+</body>
+</html>
