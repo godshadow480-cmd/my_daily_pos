@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MHA POS V22</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; color: #000; }
+        body { background: #f4f7f6; margin: 0; padding: 0; }
+        .app-box { max-width: 500px; margin: auto; background: #fff; min-height: 100vh; }
+        header { background: #1e3a8a; color: #fff; padding: 15px; text-align: center; }
+        header h1 { margin: 0; font-size: 18px; color: #fff; }
+        .tabs { display: flex; background: #eee; border-bottom: 2px solid #1e3a8a; position: sticky; top: 0; z-index: 10; }
+        .tabs button { flex: 1; padding: 15px; border: none; background: #eee; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .tabs button.active { background: #fff; color: #1e3a8a; border-bottom: 4px solid #1e3a8a; }
+        .page { padding: 15px; }
+        .card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #bbb; border-radius: 6px; font-size: 15px; }
+        .sale-row { display: flex; gap: 8px; background: #f9f9f9; padding: 10px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 6px; align-items: center; }
+        .sale-row select { flex: 2; }
+        .sale-row input { flex: 1; min-width: 60px; }
+        .btn-blue { background: #1e3a8a; color: #fff; width: 100%; padding: 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .btn-green { background: #10b981; color: #fff; width: 100%; padding: 12px; border: none; border-radius: 6px; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
+        .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        
+        /* Invoice Design - Guaranteed Multi-item Display */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 10px; }
+        .invoice-paper { background: #e6f2ff; padding: 25px; width: 100%; max-width: 380px; border-radius: 4px; border: 1px solid #999; }
+        .invoice-table { width: 100%; border-collapse: collapse; border: 1.5px solid #000; margin: 15px 0; }
+        .invoice-table th, .invoice-table td { border: 1px solid #000 !important; padding: 8px; color: #000; font-weight: bold; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="app-box">
+        <header><h1>မိုးထက်အောင်</h1></header>
+        <div class="tabs">
+            <button onclick="tab('sale-p')" id="t-sale" class="active">အရောင်း</button>
+            <button onclick="tab('stock-p')" id="t-stock">စတော့</button>
+            <button onclick="tab('report-p')" id="t-report">မှတ်တမ်း</button>
+            <button onclick="tab('item-p')" id="t-item">ပစ္စည်းသစ်</button>
+        </div>
+
+        <div id="sale-p" class="page">
+            <div class="card">
+                <input id="customer" placeholder="ဝယ်သူအမည်">
+                <input id="gate" placeholder="ဂိတ်/လိပ်စာ">
+            </div>
+            <div id="cart-list"></div>
+            <button class="btn-green" onclick="addRow()">+ ပစ္စည်းထပ်ထည့်ရန်</button>
+            <button class="btn-blue" onclick="saveSale()">ဘောက်ချာသိမ်းမည်</button>
+        </div>
+
+        <div id="stock-p" class="page hidden">
+            <div id="edit-area" class="card hidden" style="border:3px solid #1e3a8a">
+                <h3 id="edit-name" style="margin-top:0"></h3>
+                <label>စတော့</label><input type="number" id="edit-q">
+                <label>ဈေးနှုန်း</label><input type="number" id="edit-p">
+                <button class="btn-blue" onclick="confirmEdit()">သိမ်းမည်</button>
+                <button onclick="document.getElementById('edit-area').classList.add('hidden')" style="width:100%; padding:10px; background:none; border:none;">ပိတ်မည်</button>
+            </div>
+            <div class="card" style="overflow-x:auto">
+                <table><thead><tr style="background:#eee"><th>အမည်</th><th>စတော့</th><th>ဈေး</th><th>ပြင်</th></tr></thead><tbody id="stock-table"></tbody></table>
+            </div>
+        </div>
+
+        <div id="report-p" class="page hidden">
+            <div class="card"><table><thead><tr style="background:#eee"><th>ဝယ်သူ</th><th>စုစုပေါင်း</th><th>Action</th></tr></thead><tbody id="report-table"></tbody></table></div>
+        </div>
+
+        <div id="item-p" class="page hidden">
+            <div class="card"><input id="new-name" placeholder="ပစ္စည်းအမည်သစ်"><button class="btn-green" onclick="addNewItem()">ထည့်မည်</button></div>
+            <div class="card"><table><thead><tr style="background:#eee"><th>အမည်</th><th>ဖျက်</th></tr></thead><tbody id="item-list-table"></tbody></table></div>
+        </div>
+
+        <div id="invoice-modal" class="modal-overlay">
+            <div id="capture-area" class="invoice-paper">
+                <div style="text-align:center">
+                    <h2 style="margin:0; font-size:22px; text-decoration: underline;">မိုးထက်အောင်</h2>
+                    <p style="font-size:12px; margin:5px 0;">Ph: 09-740878785, 09-970609758</p>
+                </div>
+                <div id="inv-info" style="font-size:13px; margin:15px 0 10px 0; line-height:1.6;"></div>
+                <div id="inv-items-box"></div>
+                <div style="text-align:center; margin-top:15px; font-size:12px; border-top: 1px dashed #000; padding-top:10px;">
+                    <p style="margin:0">Kpay: 09750370777 (U Htet Myat Naing)</p>
+                    <b style="font-size:14px;">ဝယ်ယူအားပေးမှုကို ကျေးဇူးတင်ပါသည်</b>
+                </div>
+            </div>
+            <div style="margin-top:20px; display:flex; gap:10px; width:100%; max-width:380px;">
+                <button class="btn-green" onclick="downloadInv()" style="margin:0">Gallery သိမ်းမည်</button>
+                <button onclick="document.getElementById('invoice-modal').style.display='none'" style="background:#555; color:#fff; border:none; padding:12px; border-radius:6px; flex:1">ပိတ်မည်</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Sync across all versions
+        const keys = ['mha_v22_items','mha_v21_items','mha_v16_items'];
+        const skeys = ['mha_v22_sales','mha_v21_sales','mha_v16_sales'];
+
+        let items = JSON.parse(localStorage.getItem('mha_v22_items')) || [];
+        if(items.length === 0) { for(let k of keys){ let d=localStorage.getItem(k); if(d){ items=JSON.parse(d); break; } } }
+
+        let sales = JSON.parse(localStorage.getItem('mha_v22_sales')) || [];
+        if(sales.length === 0) { for(let k of skeys){ let d=localStorage.getItem(k); if(d){ sales=JSON.parse(d); break; } } }
+
+        let activeEdit = null;
+
+        function save() {
+            keys.forEach(k => localStorage.setItem(k, JSON.stringify(items)));
+            skeys.forEach(k => localStorage.setItem(k, JSON.stringify(sales)));
+        }
+
+        function tab(t) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+            document.getElementById(t).classList.remove('hidden');
+            document.getElementById('t-'+t.split('-')[0]).classList.add('active');
+            if(t==='stock-p') renderStock();
+            if(t==='report-p') renderReport();
+            if(t==='item-p') renderItemList();
+        }
+
+        function addRow() {
+            const div = document.createElement('div'); div.className = 'sale-row';
+            let opt = items.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
+            div.innerHTML = `<select onchange="const x=items.find(f=>f.name===this.value); if(x) this.parentElement.querySelector('.p').value=x.price;"><option value="">--ရွေး--</option>${opt}</select><input type="number" class="p" placeholder="ဈေး"><input type="number" class="q" placeholder="ခု"><b onclick="this.parentElement.remove()" style="color:red; font-size:20px; cursor:pointer">×</b>`;
+            document.getElementById('cart-list').appendChild(div);
+        }
+
+        function saveSale() {
+            const rows = document.querySelectorAll('.sale-row');
+            let s = { id: Date.now(), name: document.getElementById('customer').value, gate: document.getElementById('gate').value, products: [], total: 0 };
+            rows.forEach(r => {
+                const n = r.querySelector('select').value;
+                const p = parseFloat(r.querySelector('.p').value) || 0;
+                const q = parseInt(r.querySelector('.q').value) || 0;
+                if(n && q > 0) {
+                    const db = items.find(i => i.name === n);
+                    if(db && db.qty >= q) {
+                        db.qty -= q;
+                        s.products.push({n,p,q,t:p*q});
+                        s.total += (p*q);
+                    } else { alert(n + " စတော့မလောက်ပါ"); }
+                }
+            });
+            if(s.products.length > 0) { sales.push(s); save(); alert("သိမ်းပြီးပါပြီ"); location.reload(); }
+        }
+
+        function renderStock() {
+            document.getElementById('stock-table').innerHTML = items.map((i,idx) => `<tr><td>${i.name}</td><td><b>${i.qty}</b></td><td>${i.price}</td><td><button onclick="editStock(${idx})">ပြင်</button></td></tr>`).join('');
+        }
+        function editStock(idx) { activeEdit=idx; document.getElementById('edit-name').innerText=items[idx].name; document.getElementById('edit-q').value=items[idx].qty; document.getElementById('edit-p').value=items[idx].price; document.getElementById('edit-area').classList.remove('hidden'); window.scrollTo(0,0); }
+        function confirmEdit() { items[activeEdit].qty=parseInt(document.getElementById('edit-q').value)||0; items[activeEdit].price=parseFloat(document.getElementById('edit-p').value)||0; save(); renderStock(); document.getElementById('edit-area').classList.add('hidden'); }
+
+        function renderReport() {
+            document.getElementById('report-table').innerHTML = sales.map((s,idx) => `<tr><td><b>${s.name||'-'}</b><br><small>${s.products.length} မျိုး</small></td><td>${s.total.toLocaleString()}</td><td><button onclick="showInvoice(${s.id})">ကြည့်</button> <button onclick="delSale(${idx})" style="color:red">×</button></td></tr>`).reverse().join('');
+        }
+        
+        function showInvoice(id) {
+            const s = sales.find(x => x.id === id); if(!s) return;
+            document.getElementById('inv-info').innerHTML = `ဝယ်သူ: <b>${s.name || '-'}</b><br>ဂိတ်/လိပ်စာ: ${s.gate || '-'}`;
+            
+            // Multi-item Table Generator
+            let rows = "";
+            s.products.forEach((p, i) => {
+                rows += `<tr><td align="center">${i+1}</td><td>${p.n}</td><td align="center">${p.q}</td><td align="right">${p.p.toLocaleString()}</td><td align="right">${p.t.toLocaleString()}</td></tr>`;
+            });
+
+            document.getElementById('inv-items-box').innerHTML = `
+                <table class="invoice-table">
+                    <tr style="background:#bcd9ff"><th>No</th><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+                    ${rows}
+                    <tr style="background:#bcd9ff"><td colspan="4" align="right">စုစုပေါင်း</td><td align="right"><b>${s.total.toLocaleString()}</b></td></tr>
+                </table>`;
+            document.getElementById('invoice-modal').style.display = 'flex';
+        }
+
+        function delSale(idx) { if(confirm("ဖျက်မှာလား?")){ sales[idx].products.forEach(p=>{const db=items.find(i=>i.name===p.n); if(db)db.qty+=p.q;}); sales.splice(idx,1); save(); renderReport(); }}
+        function addNewItem() { const n=document.getElementById('new-name').value; if(n){ items.push({name:n,qty:0,price:0}); save(); renderItemList(); document.getElementById('new-name').value=''; }}
+        function renderItemList() { document.getElementById('item-list-table').innerHTML = items.map((i,idx) => `<tr><td>${i.name}</td><td><button onclick="items.splice(${idx},1); save(); renderItemList();">ဖျက်</button></td></tr>`).join(''); }
+        function downloadInv() { html2canvas(document.getElementById('capture-area')).then(c => { const a=document.createElement('a'); a.href=c.toDataURL(); a.download='Invoice.png'; a.click(); }); }
+        
+        window.onload = () => { addRow(); };
+    </script>
+</body>
+</html>
